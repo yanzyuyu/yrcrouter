@@ -3,63 +3,66 @@ package web
 import (
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/yanzyuyu/yrcrouter/internal/config"
 	"github.com/yanzyuyu/yrcrouter/internal/router"
 )
 
 type Server struct {
-	store  *config.Store
-	engine *router.Engine
+	store   *config.Store
+	engine  *router.Engine
+	distDir string
 }
 
 func NewServer(store *config.Store, engine *router.Engine) *Server {
+	distPath := "frontend/dist"
+	if _, err := os.Stat(distPath); err != nil {
+		distPath = ""
+	}
+
 	return &Server{
-		store:  store,
-		engine: engine,
+		store:   store,
+		engine:  engine,
+		distDir: distPath,
 	}
 }
 
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/static/app.css", s.handleCSS)
-	mux.HandleFunc("/static/app.js", s.handleJS)
-	mux.HandleFunc("/", s.handleIndex)
 	mux.HandleFunc("/api/status", s.handleStatus)
 	mux.HandleFunc("/api/config", s.handleConfig)
 
 	mux.HandleFunc("/v1/models", s.engine.HandleModels)
 	mux.HandleFunc("/v1/chat/completions", s.engine.HandleChatCompletions)
-}
 
-func (s *Server) handleCSS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/css; charset=utf-8")
-	_, _ = w.Write([]byte(assetAppCSS))
-}
+	if s.distDir != "" {
+		assetsDir := filepath.Join(s.distDir, "assets")
+		mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir(assetsDir))))
+	}
 
-func (s *Server) handleJS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-	_, _ = w.Write([]byte(assetAppJS))
+	mux.HandleFunc("/", s.handleIndex)
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" && r.URL.Path != "/dashboard" {
-		http.NotFound(w, r)
-		return
+	if s.distDir != "" {
+		indexPath := filepath.Join(s.distDir, "index.html")
+		if data, err := os.ReadFile(indexPath); err == nil {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(data)
+			return
+		}
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = w.Write([]byte(assetIndexHTML))
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	_, _ = w.Write([]byte("Frontend bundle not found. Please run 'npm run build' inside frontend directory."))
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	metrics := s.engine.GetMetrics()
-	logs := s.engine.GetRecentLogs(20)
+	logs := s.engine.GetRecentLogs(30)
 	cfg := s.store.Get()
-
-	for i := range cfg.Providers {
-		if cfg.Providers[i].APIKey != "" {
-			cfg.Providers[i].APIKey = "••••••••"
-		}
-	}
 
 	res := map[string]interface{}{
 		"metrics": metrics,
