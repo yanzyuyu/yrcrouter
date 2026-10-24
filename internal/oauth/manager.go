@@ -42,11 +42,12 @@ func (m *Manager) StartPKCE(providerID string) (authURL string, state string, co
 
 	switch providerID {
 	case "antigravity":
-		authURL = "https://accounts.google.com/o/oauth2/v2/auth?client_id=1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&access_type=offline&prompt=consent&state=" + state
+		clientID, _ := GetAntigravityCredentials()
+		authURL = "https://accounts.google.com/o/oauth2/v2/auth?client_id=" + clientID + "&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A20128%2Fcallback&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&access_type=offline&prompt=consent&state=" + state
 	case "claude":
 		authURL = "https://claude.ai/login/oauth/authorize?client_id=claude-code&response_type=code&code_challenge=" + codeChallenge + "&code_challenge_method=S256&state=" + state
 	case "gemini":
-		authURL = "https://accounts.google.com/o/oauth2/v2/auth?client_id=gemini-cli&response_type=code&scope=email%20profile&code_challenge=" + codeChallenge + "&code_challenge_method=S256&state=" + state
+		authURL = "https://accounts.google.com/o/oauth2/v2/auth?client_id=gemini-cli&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A20128%2Fapi%2Foauth%2Fcallback&scope=email%20profile&code_challenge=" + codeChallenge + "&code_challenge_method=S256&state=" + state
 	default:
 		authURL = "https://github.com/yanzyuyu/yrcrouter"
 	}

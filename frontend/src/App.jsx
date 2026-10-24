@@ -237,7 +237,7 @@ export default function App() {
   const faqs = [
     {
       q: 'Bagaimana cara menghubungkan akun Google Antigravity ke router ini?',
-      a: 'Pada tabel provider di bawah, cari kartu Google Antigravity lalu klik tombol OAuth Login. Anda akan diarahkan ke halaman login Google resmi dengan izin Cloud Platform, lalu token sesi akan terpasang otomatis.'
+      a: 'Pada katalog provider di bawah, cari kartu Google Antigravity lalu klik tombol OAuth Login. Anda akan diarahkan ke halaman otorisasi Google resmi dengan scope cloud platform, lalu token sesi akan terpasang otomatis ke router.'
     },
     {
       q: 'Apakah akun GitHub Copilot bisa digunakan tanpa mengetikkan token manual?',
@@ -262,9 +262,9 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen text-neutral-800 flex flex-col font-sans selection:bg-[#e05236]/20 selection:text-[#e05236]">
-      <header className="border-b border-neutral-200/80 bg-white/90 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+    <div className="min-h-screen text-neutral-800 flex flex-col font-sans selection:bg-[#e05236]/20 selection:text-[#e05236] w-full">
+      <header className="border-b border-neutral-200/80 bg-white/90 backdrop-blur sticky top-0 z-40 w-full">
+        <div className="w-full px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 h-16 flex items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <span className="w-8 h-8 rounded-lg bg-[#e05236] text-white font-bold flex items-center justify-center text-sm shadow-sm">
               YR
@@ -316,19 +316,19 @@ export default function App() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-6 py-10 w-full flex-1 flex flex-col gap-16">
-        <section id="overview" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <main className="w-full px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-10 flex-1 flex flex-col gap-16">
+        <section id="overview" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
           <div className="lg:col-span-7 flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               <h1 className="text-3xl sm:text-4xl font-extrabold text-neutral-950 tracking-tight leading-tight">
                 Gateway AI &amp; Proxy Model Multi-Provider Tercepat di Indonesia
               </h1>
-              <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed max-w-2xl">
+              <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed max-w-3xl">
                 Engine backend REST API mandiri tanpa perantara Cloudflare Worker. Ditenagai komunikasi langsung dengan Google Antigravity, GitHub Copilot OAuth resmi, auto-fallback 3-tier saat terkena rate limit 429, dan kompresi token RTK bawaan untuk penghematan biaya token hingga 40%.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
               <div className="p-4 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col">
                 <span className="text-lg font-bold text-neutral-900">99.98%</span>
                 <span className="text-[11px] text-neutral-600">Uptime Gateway</span>
@@ -389,9 +389,20 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setApiKeyMasked(!apiKeyMasked)}
-                  className="p-2 border border-neutral-200 hover:bg-neutral-50 rounded-lg text-neutral-600 text-xs"
+                  className="p-2 border border-neutral-200 hover:bg-neutral-50 rounded-lg text-neutral-600 text-xs flex items-center justify-center"
+                  aria-label={apiKeyMasked ? 'Tampilkan API Key' : 'Sembunyikan API Key'}
                 >
-                  {apiKeyMasked ? '👁' : '🔒'}
+                  {apiKeyMasked ? (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  )}
                 </button>
                 <button
                   type="button"
@@ -423,16 +434,21 @@ export default function App() {
           </div>
         </section>
 
-        <section id="keunggulan" className="flex flex-col gap-6">
+        <section id="keunggulan" className="flex flex-col gap-6 w-full">
           <div className="flex items-end justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-neutral-900">Keunggulan Engine Kami</h2>
               <span className="text-xs text-neutral-600">Mengapa ratusan developer AI coding assistant dan bot memilih integrasi yrcrouter.</span>
             </div>
-            <a href="#providers" className="text-xs text-[#e05236] font-semibold hover:underline">Lihat Selengkapnya &rarr;</a>
+            <a href="#providers" className="text-xs text-[#e05236] font-semibold hover:underline flex items-center gap-1">
+              <span>Lihat Selengkapnya</span>
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-2">
               <span className="w-6 h-6 rounded bg-orange-100 text-[#e05236] text-xs font-bold flex items-center justify-center font-mono">01</span>
               <h3 className="font-bold text-sm text-neutral-900 mt-1">Multi-Tier Auto Fallback</h3>
@@ -467,7 +483,7 @@ export default function App() {
           </div>
         </section>
 
-        <section id="playground" className="flex flex-col gap-4">
+        <section id="playground" className="flex flex-col gap-4 w-full">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-neutral-900">Interactive Live Playground</h2>
@@ -476,7 +492,7 @@ export default function App() {
             <span className="text-xs font-mono text-neutral-600">Header: Authorization aktif otomatis</span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full">
             <form onSubmit={handleTestSubmit} className="lg:col-span-5 p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-sm flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-neutral-700">Endpoint Target</label>
@@ -522,7 +538,9 @@ export default function App() {
                 disabled={testLoading}
                 className="w-full py-2.5 text-xs font-semibold bg-[#e05236] hover:bg-[#c9452b] disabled:opacity-50 text-white rounded-lg transition shadow-sm flex items-center justify-center gap-2"
               >
-                <span>▷</span>
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M5 3l14 9-14 9V3z" />
+                </svg>
                 <span>{testLoading ? 'Mengirim Permintaan...' : 'Kirim Permintaan HTTP'}</span>
               </button>
             </form>
@@ -536,9 +554,13 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => triggerCopy(testOutput, 'JSON Disalin!')}
-                  className="hover:text-white transition"
+                  className="hover:text-white transition flex items-center gap-1.5"
                 >
-                  Salin Output JSON
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  <span>Salin Output JSON</span>
                 </button>
               </div>
 
@@ -549,7 +571,7 @@ export default function App() {
           </div>
         </section>
 
-        <section id="api-reference" className="flex flex-col gap-4">
+        <section id="api-reference" className="flex flex-col gap-4 w-full">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-neutral-900">Dokumentasi Endpoint REST API</h2>
@@ -564,7 +586,7 @@ export default function App() {
             </button>
           </div>
 
-          <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-xs divide-y divide-neutral-100 text-xs">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-xs divide-y divide-neutral-100 text-xs w-full">
             <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-orange-100 text-[#e05236] rounded">POST</span>
@@ -577,10 +599,10 @@ export default function App() {
             <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-purple-100 text-purple-700 rounded">OAUTH</span>
-                <span className="font-mono font-semibold text-neutral-900">/api/oauth/antigravity</span>
-                <span className="text-neutral-600 text-xs hidden sm:inline">&mdash; Inisialisasi login Google Antigravity PKCE</span>
+                <span className="font-mono font-semibold text-neutral-900">/callback</span>
+                <span className="text-neutral-600 text-xs hidden sm:inline">&mdash; Callback otorisasi Google Antigravity PKCE</span>
               </div>
-              <span className="font-mono text-[11px] text-neutral-600">Alur: PKCE Auth URL</span>
+              <span className="font-mono text-[11px] text-neutral-600">Alur: Authorization Code Flow</span>
             </div>
 
             <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -603,7 +625,7 @@ export default function App() {
           </div>
         </section>
 
-        <section id="providers" className="flex flex-col gap-6">
+        <section id="providers" className="flex flex-col gap-6 w-full">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-neutral-900">Katalog Provider AI ({config.providers ? config.providers.length : 0})</h2>
@@ -619,7 +641,7 @@ export default function App() {
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 w-full">
             {categories.map(cat => (
               <button
                 key={cat}
@@ -632,7 +654,7 @@ export default function App() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
             {filteredProviders.map(p => {
               const isKeyOpen = keyVisible[p.id];
               const hasOAuth = oauthSupportedIds.includes(p.id);
@@ -673,9 +695,14 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => openOAuthModal(p)}
-                          className="text-[11px] text-[#e05236] hover:underline font-semibold"
+                          className="text-[11px] text-[#e05236] hover:underline font-semibold flex items-center gap-1"
                         >
-                          OAuth Login ↗
+                          <span>OAuth Login</span>
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
                         </button>
                       )}
                     </div>
@@ -725,13 +752,13 @@ export default function App() {
           </div>
         </section>
 
-        <section id="paket-&-lisensi" className="flex flex-col gap-6 items-center">
+        <section id="paket-&-lisensi" className="flex flex-col gap-6 items-center w-full">
           <div className="text-center flex flex-col gap-1 max-w-xl">
             <h2 className="text-2xl font-bold text-neutral-900">Paket Lisensi &amp; Peran</h2>
             <p className="text-xs text-neutral-600">Pilih tingkatan role yang sesuai dengan kebutuhan integrasi Anda. Seluruh pembayaran dan aktivasi berjalan otomatis.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
             <div className="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs flex flex-col gap-5">
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-600">STARTER</span>
@@ -745,10 +772,30 @@ export default function App() {
               </div>
 
               <ul className="flex flex-col gap-2.5 text-xs text-neutral-700">
-                <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> 50 Request API / hari</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Akses Pengujian di Live Playground</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Auto-Fallback Dasar</li>
-                <li className="flex items-center gap-2"><span className="text-neutral-400">✕</span> Tanpa Antigravity &amp; Copilot OAuth</li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span>50 Request API / hari</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span>Akses Pengujian di Live Playground</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span>Auto-Fallback Dasar</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-neutral-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                  <span>Tanpa Antigravity &amp; Copilot OAuth</span>
+                </li>
               </ul>
 
               <button type="button" className="w-full py-2.5 text-xs font-semibold border border-neutral-200 hover:bg-neutral-50 rounded-lg text-neutral-800 mt-auto">
@@ -774,11 +821,36 @@ export default function App() {
               </div>
 
               <ul className="flex flex-col gap-2.5 text-xs text-neutral-700">
-                <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> 2.500 Request API / bulan (Unlimited self-hosted)</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Integrasi Penuh Google Antigravity &amp; Copilot OAuth</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Bypass Limit Kuota Otomatis via Fallback 3-Tier</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> RTK Token Compression (-40% Token)</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-600 font-bold">✓</span> Role Server VIP Member &amp; Bantuan Setup</li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span>2.500 Request API / bulan (Unlimited self-hosted)</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span>Integrasi Penuh Google Antigravity &amp; Copilot OAuth</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span>Bypass Limit Kuota Otomatis via Fallback 3-Tier</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span>RTK Token Compression (-40% Token)</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span>Role Server VIP Member &amp; Bantuan Setup</span>
+                </li>
               </ul>
 
               <button type="button" className="w-full py-2.5 text-xs font-semibold bg-[#e05236] hover:bg-[#c9452b] text-white rounded-lg shadow-sm mt-auto">
@@ -788,11 +860,11 @@ export default function App() {
           </div>
         </section>
 
-        <section id="order-via-bot" className="p-8 bg-white border border-neutral-200/80 rounded-2xl shadow-xs flex flex-col gap-6">
+        <section id="order-via-bot" className="p-8 bg-white border border-neutral-200/80 rounded-2xl shadow-xs flex flex-col gap-6 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-neutral-900">Order Otomatis Lewat Bot Discord 24/7</h2>
-              <p className="text-xs text-neutral-600 max-w-xl">
+              <p className="text-xs text-neutral-600 max-w-2xl">
                 Tidak perlu menunggu admin membalas manual. Lakukan pembelian role atau API key kapan saja melalui Bot Resmi Discord kami. Bayar melalui QRIS dan kunci API Anda langsung dikirimkan ke Direct Message (DM) dalam hitungan detik.
               </p>
             </div>
@@ -802,12 +874,14 @@ export default function App() {
               onClick={() => triggerCopy('https://discord.gg/antigravity', 'Link Discord disalin!')}
               className="px-5 py-2.5 bg-[#5865F2] hover:bg-[#4752c4] text-white text-xs font-semibold rounded-lg flex items-center gap-2 shadow-sm whitespace-nowrap self-start"
             >
-              <span>👾</span>
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+              </svg>
               <span>Order Lewat Bot Discord</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-neutral-100">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-neutral-100 w-full">
             <div className="p-4 bg-neutral-50 border border-neutral-200/80 rounded-xl flex flex-col gap-1">
               <span className="text-xs font-bold text-neutral-900">Langkah 1: Masuk Server</span>
               <span className="text-[11px] text-neutral-600">Klik tombol di atas untuk bergabung ke server Discord resmi kami.</span>
@@ -823,7 +897,7 @@ export default function App() {
           </div>
         </section>
 
-        <section id="status-&-sla" className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section id="status-&-sla" className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
           <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-1">
             <span className="text-[10px] uppercase font-bold text-neutral-600">SLA &amp; KEANDALAN</span>
             <span className="font-bold text-sm text-neutral-900">Garansi Uptime 99.98%</span>
@@ -849,13 +923,13 @@ export default function App() {
           </div>
         </section>
 
-        <section id="sdk-integrasi" className="flex flex-col gap-4">
+        <section id="sdk-integrasi" className="flex flex-col gap-4 w-full">
           <div className="flex flex-col gap-1">
             <h2 className="text-xl font-bold text-neutral-900">Contoh Integrasi Kode SDK</h2>
             <span className="text-xs text-neutral-600">Salin cuplikan kode siap pakai untuk langsung menghubungkan backend Anda.</span>
           </div>
 
-          <div className="bg-[#0c1322] border border-neutral-800 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+          <div className="bg-[#0c1322] border border-neutral-800 rounded-2xl overflow-hidden shadow-sm flex flex-col w-full">
             <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-[#090e1a]">
               <div className="flex items-center gap-2">
                 {['cURL', 'Node.js', 'Discord.js', 'Python', 'Go'].map(sdk => (
@@ -873,9 +947,13 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => triggerCopy(sdkCode[selectedSdk], 'Kode Disalin!')}
-                className="text-xs text-neutral-400 hover:text-white font-mono transition"
+                className="text-xs text-neutral-400 hover:text-white font-mono transition flex items-center gap-1.5"
               >
-                Salin Kode
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span>Salin Kode</span>
               </button>
             </div>
 
@@ -885,13 +963,13 @@ export default function App() {
           </div>
         </section>
 
-        <section id="faq" className="flex flex-col gap-6">
+        <section id="faq" className="flex flex-col gap-6 w-full">
           <div className="flex flex-col gap-1">
             <h2 className="text-xl font-bold text-neutral-900">Pertanyaan yang Sering Diajukan (FAQ)</h2>
             <span className="text-xs text-neutral-600">Jawaban lengkap dan transparan seputar durasi akun, bypass limit, serta integrasi bot.</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start w-full">
             {faqs.map((f, idx) => {
               const isOpen = faqOpen[idx];
               return (
@@ -899,10 +977,20 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setFaqOpen({ ...faqOpen, [idx]: !isOpen })}
-                    className="flex items-center justify-between text-left font-bold text-xs sm:text-sm text-neutral-900 gap-2"
+                    className="flex items-center justify-between text-left font-bold text-xs sm:text-sm text-neutral-900 gap-2 w-full"
                   >
                     <span>{f.q}</span>
-                    <span className="text-neutral-400 text-xs font-mono">{isOpen ? '▲' : '▼'}</span>
+                    <span className="text-neutral-400 shrink-0">
+                      {isOpen ? (
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 15l-6-6-6 6" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
+                      )}
+                    </span>
                   </button>
                   {isOpen && (
                     <p className="text-xs text-neutral-600 leading-relaxed pt-1 border-t border-neutral-100">
@@ -916,8 +1004,8 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="border-t border-neutral-200 bg-white py-12 mt-12 text-xs text-neutral-600">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <footer className="border-t border-neutral-200 bg-white py-12 mt-12 text-xs text-neutral-600 w-full">
+        <div className="w-full px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded bg-[#e05236] text-white font-bold flex items-center justify-center text-xs">YR</span>
@@ -952,17 +1040,25 @@ export default function App() {
 
           <div className="flex flex-col gap-2">
             <span className="font-bold text-xs uppercase text-neutral-900 tracking-wider">DUKUNGAN &amp; KOMUNITAS</span>
-            <a href="https://github.com/yanzyuyu/yrcrouter" target="_blank" rel="noreferrer" className="hover:text-neutral-900">GitHub Repository &rarr;</a>
+            <a href="https://github.com/yanzyuyu/yrcrouter" target="_blank" rel="noreferrer" className="hover:text-neutral-900 flex items-center gap-1">
+              <span>GitHub Repository</span>
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
             <span className="hover:text-neutral-900">Order Otomatis 24/7 QRIS</span>
             <span className="hover:text-neutral-900">Kebijakan SLA &amp; Keamanan</span>
             <span className="hover:text-neutral-900">Otentikasi Akun Discord</span>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 pt-6 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-neutral-400">
+        <div className="w-full px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 pt-6 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-neutral-400">
           <span>&copy; 2026 yrcrouter Developer Suite &bull; Official REST Gateway &bull; 100% Go Native</span>
-          <a href="#overview" className="hover:text-neutral-800 flex items-center gap-1 font-medium text-xs">
-            <span>▲ Kembali ke Puncak</span>
+          <a href="#overview" className="hover:text-neutral-800 flex items-center gap-1.5 font-medium text-xs">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 15l-6-6-6 6" />
+            </svg>
+            <span>Kembali ke Puncak</span>
           </a>
         </div>
       </footer>
@@ -975,9 +1071,12 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setOauthModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 text-sm font-bold"
+                className="text-neutral-400 hover:text-neutral-700 p-1 rounded-lg"
+                aria-label="Tutup modal"
               >
-                ✕
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
@@ -988,9 +1087,14 @@ export default function App() {
                   href={deviceFlowData.verification_uri || 'https://github.com/login/device'}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-lg text-center hover:bg-neutral-800"
+                  className="px-3 py-2 text-xs font-semibold bg-neutral-900 text-white rounded-lg text-center hover:bg-neutral-800 flex items-center justify-center gap-1.5"
                 >
-                  Buka github.com/login/device ↗
+                  <span>Buka github.com/login/device</span>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
                 </a>
 
                 <span className="mt-2">2. Masukkan kode verifikasi 8-digit ini:</span>
@@ -1014,9 +1118,14 @@ export default function App() {
                     href={deviceFlowData.auth_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-3 py-2 text-xs font-semibold bg-[#e05236] text-white rounded-lg text-center hover:bg-[#c9452b]"
+                    className="px-3 py-2 text-xs font-semibold bg-[#e05236] text-white rounded-lg text-center hover:bg-[#c9452b] flex items-center justify-center gap-1.5"
                   >
-                    Login Google Antigravity ↗
+                    <span>Login Google Antigravity</span>
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
                   </a>
                 ) : (
                   <button

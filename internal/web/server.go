@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -40,6 +41,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/oauth/github/poll", s.handleGitHubPoll)
 	mux.HandleFunc("/api/oauth/pkce-start", s.handlePKCEStart)
 	mux.HandleFunc("/api/oauth/import-token", s.handleImportToken)
+	mux.HandleFunc("/api/oauth/callback", s.handleOAuthCallback)
+	mux.HandleFunc("/callback", s.handleOAuthCallback)
 
 	mux.HandleFunc("/v1/models", s.engine.HandleModels)
 	mux.HandleFunc("/v1/chat/completions", s.engine.HandleChatCompletions)
@@ -172,7 +175,7 @@ func (s *Server) handleGitHubPoll(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handlePKCEStart(w http.ResponseWriter, r *http.Request) {
 	provider := r.URL.Query().Get("provider")
 	if provider == "" {
-		provider = "claude"
+		provider = "antigravity"
 	}
 
 	authURL, state, verifier := s.oauthManager.StartPKCE(provider)
@@ -184,6 +187,72 @@ func (s *Server) handlePKCEStart(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(res)
+}
+
+func (s *Server) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	errParam := r.URL.Query().Get("error")
+
+	if errParam != "" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		msg := fmt.Sprintf(`<!DOCTYPE html><html><body style="font-family:sans-serif;background:#faf9f6;padding:40px;text-align:center;"><h2>Otorisasi Ditolak</h2><p>%s</p></body></html>`, errParam)
+		_, _ = w.Write([]byte(msg))
+		return
+	}
+
+	if code == "" {
+		http.Error(w, "Missing authorization code", http.StatusBadRequest)
+		return
+	}
+
+	redirectURI := "http://localhost:20128/callback"
+	if r.URL.Path == "/api/oauth/callback" {
+		redirectURI = "http://localhost:20128/api/oauth/callback"
+	}
+	token, err := oauth.ExchangeAntigravityCode(code, redirectURI)
+	if err != nil && redirectURI != "http://localhost:20128/callback" {
+		token, err = oauth.ExchangeAntigravityCode(code, "http://localhost:20128/callback")
+	}
+	if err != nil {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		msg := fmt.Sprintf(`<!DOCTYPE html><html><body style="font-family:sans-serif;background:#faf9f6;padding:40px;text-align:center;"><h2>Gagal Tukar Token</h2><p>%s</p></body></html>`, err.Error())
+		_, _ = w.Write([]byte(msg))
+		return
+	}
+
+	cfg := s.store.Get()
+	for i := range cfg.Providers {
+		if cfg.Providers[i].ID == "antigravity" {
+			cfg.Providers[i].APIKey = token
+			cfg.Providers[i].Enabled = true
+		}
+	}
+	_ = s.store.Update(cfg)
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	html := `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Otorisasi Berhasil</title>
+<style>
+body { font-family: system-ui, sans-serif; background: #faf9f6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+.card { background: white; border: 1px solid #e5e5e0; padding: 32px; border-radius: 16px; text-align: center; max-width: 420px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+h2 { color: #171717; margin-bottom: 8px; font-size: 1.25rem; }
+p { color: #737373; font-size: 0.875rem; margin-bottom: 20px; }
+.btn { background: #e05236; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 0.8125rem; font-weight: 600; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Google Antigravity Terhubung</h2>
+  <p>Token berhasil dipasang ke yrcrouter. Anda dapat menutup tab ini.</p>
+  <a href="/" class="btn">Kembali ke Dashboard</a>
+  <script>setTimeout(function() { window.close(); }, 2500);</script>
+</div>
+</body>
+</html>`
+	_, _ = w.Write([]byte(html))
 }
 
 func (s *Server) handleImportToken(w http.ResponseWriter, r *http.Request) {
