@@ -344,7 +344,7 @@ func DefaultConfig() Config {
 				Name:     "LM Studio (Local)",
 				Category: "Local",
 				BaseURL:  "http://localhost:1234/v1",
-				APIKey:   "lm-studio",
+				APIKey:   "",
 				Tier:     3,
 				Enabled:  true,
 				Models:   []string{"local-model"},
