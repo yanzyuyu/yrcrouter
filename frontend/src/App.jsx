@@ -4,7 +4,6 @@ export default function App() {
   const [activeNav, setActiveNav] = useState('Overview');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSdk, setSelectedSdk] = useState('cURL');
-  const [faqOpen, setFaqOpen] = useState({ 0: true });
 
   const [metrics, setMetrics] = useState({
     total_requests: 0,
@@ -87,6 +86,21 @@ export default function App() {
       fetchData();
     } catch (err) {
       setTestStatus('Gagal simpan');
+    }
+  }
+
+  async function toggleCompression() {
+    const newConfig = { ...config, compress_tokens: !config.compress_tokens };
+    setConfig(newConfig);
+    try {
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newConfig)
+      });
+      fetchData();
+    } catch (err) {
+      setTestStatus('Gagal ubah kompresi');
     }
   }
 
@@ -198,11 +212,7 @@ export default function App() {
       const body = await res.json();
       setTestLatency(Date.now() - startTime);
       setTestStatus('HTTP ' + res.status);
-      if (res.ok && body.choices && body.choices[0]) {
-        setTestOutput(JSON.stringify(body, null, 2));
-      } else {
-        setTestOutput(JSON.stringify(body, null, 2));
-      }
+      setTestOutput(JSON.stringify(body, null, 2));
     } catch (err) {
       setTestStatus('Error');
       setTestOutput('Error: ' + err.message);
@@ -224,42 +234,15 @@ export default function App() {
 
   const oauthSupportedIds = ['antigravity', 'github_copilot', 'github', 'cursor', 'claude', 'gemini', 'openai', 'codex'];
 
-  const navLinks = ['Overview', 'Keunggulan', 'Playground', 'API Reference', 'Paket & Lisensi', 'Order via Bot', 'Status & SLA', 'SDK Integrasi', 'FAQ'];
+  const navLinks = ['Overview', 'Provider', 'Fallback Pipeline', 'RTK Optimizer', 'Playground', 'Traffic Logs', 'SDK Integrasi'];
 
   const sdkCode = {
     cURL: `curl -X POST http://localhost:${config.port || 20128}/v1/chat/completions \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer \${API_KEY}" \\\n  -d '{\n    "model": "${testModel}",\n    "messages": [{"role": "user", "content": "Halo yrcrouter!"}]\n  }'`,
     'Node.js': `import OpenAI from "openai";\n\nconst client = new OpenAI({\n  baseURL: "http://localhost:${config.port || 20128}/v1",\n  apiKey: process.env.ROUTER_KEY || "local-key"\n});\n\nconst res = await client.chat.completions.create({\n  model: "${testModel}",\n  messages: [{ role: "user", content: "Halo dari Node.js!" }]\n});\nconsole.log(res.choices[0].message.content);`,
-    'Discord.js': `const { Client, GatewayIntentBits } = require("discord.js");\nconst client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });\n\nclient.on("messageCreate", async (msg) => {\n  if (msg.author.bot) return;\n  const res = await fetch("http://localhost:${config.port || 20128}/v1/chat/completions", {\n    method: "POST",\n    headers: { "Content-Type": "application/json" },\n    body: JSON.stringify({ model: "${testModel}", messages: [{ role: "user", content: msg.content }] })\n  });\n  const data = await res.json();\n  msg.reply(data.choices[0].message.content);\n});\nclient.login(process.env.DISCORD_TOKEN);`,
     Python: `from openai import OpenAI\n\nclient = OpenAI(\n    base_url="http://localhost:${config.port || 20128}/v1",\n    api_key="local-key"\n)\n\nresponse = client.chat.completions.create(\n    model="${testModel}",\n    messages=[{"role": "user", "content": "Halo dari Python!"}]\n)\nprint(response.choices[0].message.content)`,
-    Go: `package main\n\nimport (\n\t"bytes"\n\t"fmt"\n\t"io"\n\t"net/http"\n)\n\nfunc main() {\n\tpayload := []byte(\`{"model":"${testModel}","messages":[{"role":"user","content":"Halo dari Go!"}]}\`)\n\tresp, _ := http.Post("http://localhost:${config.port || 20128}/v1/chat/completions", "application/json", bytes.NewReader(payload))\n\tbody, _ := io.ReadAll(resp.Body)\n\tfmt.Println(string(body))\n}`
+    Go: `package main\n\nimport (\n\t"bytes"\n\t"fmt"\n\t"io"\n\t"net/http"\n)\n\nfunc main() {\n\tpayload := []byte(\`{"model":"${testModel}","messages":[{"role":"user","content":"Halo dari Go!"}]}\`)\n\tresp, _ := http.Post("http://localhost:${config.port || 20128}/v1/chat/completions", "application/json", bytes.NewReader(payload))\n\tbody, _ := io.ReadAll(resp.Body)\n\tfmt.Println(string(body))\n}`,
+    'Cursor / Cline': `// Tambahkan endpoint ini pada konfigurasi ekstensi Cline / Cursor / Claude Code:\n{\n  "openAiBaseUrl": "http://localhost:${config.port || 20128}/v1",\n  "openAiApiKey": "${apiKeyInput}",\n  "openAiModelId": "${testModel}"\n}`
   };
-
-  const faqs = [
-    {
-      q: 'Bagaimana cara menghubungkan akun Google Antigravity ke router ini?',
-      a: 'Pada katalog provider di bawah, cari kartu Google Antigravity lalu klik tombol OAuth Login. Anda akan diarahkan ke halaman otorisasi Google resmi dengan scope cloud platform, lalu token sesi akan terpasang otomatis ke router.'
-    },
-    {
-      q: 'Apakah akun GitHub Copilot bisa digunakan tanpa mengetikkan token manual?',
-      a: 'Bisa. Klik OAuth Login pada kartu GitHub Copilot. Router akan menghasilkan kode 8-digit dan tautan ke github.com/login/device. Setelah Anda klik Authorize di browser, router otomatis mengambil Copilot Internal Token dan langsung mengaktifkannya.'
-    },
-    {
-      q: 'Apakah yrcrouter benar-benar kompatibel dengan Claude Code, Cursor, dan Cline?',
-      a: '100% kompatibel. yrcrouter mengekspos endpoint OpenAI-compatible standar di http://localhost:20128/v1. Cukup masukkan base URL tersebut dan pilih model apa saja seperti antigravity/claude-3-7-sonnet atau gemini-2.5-flash.'
-    },
-    {
-      q: 'Bagaimana cara kerja 3-tier auto-fallback saat terkena limit 429?',
-      a: 'Jika provider Tier 1 (misal Antigravity atau Groq) mengalami rate limit HTTP 429 atau downtime 5xx, router secara instan dalam <10ms mengalihkan panggilan ke Tier 2 (OpenRouter, DeepSeek) atau Tier 3 (Ollama lokal) tanpa memutus sesi IDE Anda.'
-    },
-    {
-      q: 'Berapa konsumsi RAM dan resource engine Go ini?',
-      a: 'Engine inti dibangun dengan Go standard library tanpa framework berat sehingga footprint RAM hanya berkisar antara 15MB - 20MB, jauh lebih hemat dibanding Node.js/Next.js yang memakan 200MB+.'
-    },
-    {
-      q: 'Bagaimana cara kerja penghemat token (RTK Token Optimizer)?',
-      a: 'Router mendeteksi teks redundan dalam percakapan coding seperti git diff index header, trailing spaces, dan baris kosong berturut-turut, lalu menormalkannya sebelum diteruskan ke LLM, menghemat 20% hingga 40% kuota token input.'
-    }
-  ];
 
   return (
     <div className="min-h-screen text-neutral-800 flex flex-col font-sans selection:bg-[#e05236]/20 selection:text-[#e05236] w-full">
@@ -271,7 +254,7 @@ export default function App() {
             </span>
             <div className="flex flex-col">
               <span className="font-bold text-sm tracking-tight text-neutral-900 leading-none">yrcrouter</span>
-              <span className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider">AI Gateway Suite</span>
+              <span className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider">AI Gateway &amp; Proxy Suite</span>
             </div>
           </div>
 
@@ -290,21 +273,21 @@ export default function App() {
 
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1 bg-neutral-100 border border-neutral-200/80 rounded-lg text-xs">
-              <span className="w-5 h-5 rounded-full bg-neutral-300 text-neutral-700 flex items-center justify-center text-[10px] font-bold">
-                Y
-              </span>
-              <div className="flex flex-col leading-tight">
-                <span className="font-medium text-neutral-800 text-[11px]">yanzyuyu</span>
-                <span className="text-[9px] text-emerald-600 font-semibold leading-none">Verified Member</span>
-              </div>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-mono text-neutral-800 text-[11px]">Port {config.port || 20128}</span>
+              <span className="text-[10px] text-neutral-500 font-medium">Go Core</span>
             </div>
 
             <button
               type="button"
               onClick={() => triggerCopy('http://localhost:' + (config.port || 20128) + '/v1', 'Endpoint disalin!')}
-              className="px-3.5 py-1.5 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg transition shadow-sm"
+              className="px-3.5 py-1.5 text-xs font-semibold bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg transition shadow-sm flex items-center gap-1.5"
             >
-              Salin Endpoint
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span>Salin Endpoint</span>
             </button>
           </div>
         </div>
@@ -321,10 +304,10 @@ export default function App() {
           <div className="lg:col-span-7 flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               <h1 className="text-3xl sm:text-4xl font-extrabold text-neutral-950 tracking-tight leading-tight">
-                Gateway AI &amp; Proxy Model Multi-Provider Tercepat di Indonesia
+                Gateway AI &amp; Multi-Provider Reverse Proxy Tercepat
               </h1>
               <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed max-w-3xl">
-                Engine backend REST API mandiri tanpa perantara Cloudflare Worker. Ditenagai komunikasi langsung dengan Google Antigravity, GitHub Copilot OAuth resmi, auto-fallback 3-tier saat terkena rate limit 429, dan kompresi token RTK bawaan untuk penghematan biaya token hingga 40%.
+                Engine routing mandiri berbasis Go standard library tanpa ketergantungan framework berat. Terhubung langsung ke Google Antigravity, GitHub Copilot OAuth resmi, Claude, OpenAI, dan model lokal tanpa perantara dengan latensi ultra rendah dan kompresi token RTK otomatis.
               </p>
             </div>
 
@@ -334,12 +317,12 @@ export default function App() {
                 <span className="text-[11px] text-neutral-600">Uptime Gateway</span>
               </div>
               <div className="p-4 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col">
-                <span className="text-lg font-bold text-neutral-900">&lt; 120ms</span>
-                <span className="text-[11px] text-neutral-600">Rata-rata Latensi</span>
+                <span className="text-lg font-bold text-neutral-900">&lt; 15ms</span>
+                <span className="text-[11px] text-neutral-600">Engine Overhead</span>
               </div>
               <div className="p-4 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col">
-                <span className="text-lg font-bold text-neutral-900">100%</span>
-                <span className="text-[11px] text-neutral-600">Resmi &amp; Standar API</span>
+                <span className="text-lg font-bold text-neutral-900">{config.providers ? config.providers.length : 30}+</span>
+                <span className="text-[11px] text-neutral-600">Provider AI</span>
               </div>
               <div className="p-4 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col">
                 <span className="text-lg font-bold text-emerald-600">Anti-Limit</span>
@@ -351,7 +334,7 @@ export default function App() {
           <div className="lg:col-span-5 bg-white border border-neutral-200/80 rounded-2xl p-6 shadow-sm flex flex-col gap-5 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 font-mono">
-                KREDENSIAL API ANDA
+                KREDENSIAL GATEWAY ANDA
               </span>
               <span className="text-[10px] font-mono text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                 Gateway Aktif
@@ -378,7 +361,7 @@ export default function App() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-neutral-700">API Key Aktif (Header: Authorization)</label>
+              <label className="text-xs font-semibold text-neutral-700">Gateway API Key (Header: Authorization)</label>
               <div className="flex items-center gap-2">
                 <input
                   type={apiKeyMasked ? 'password' : 'text'}
@@ -422,7 +405,7 @@ export default function App() {
             </div>
 
             <div className="flex items-center justify-between text-xs text-neutral-600 pt-2 border-t border-neutral-100">
-              <span>Kunci hilang atau bocor?</span>
+              <span>Perlu rotasi kredensial lokal?</span>
               <button
                 type="button"
                 onClick={() => setApiKeyInput('yr_live_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15))}
@@ -434,14 +417,14 @@ export default function App() {
           </div>
         </section>
 
-        <section id="keunggulan" className="flex flex-col gap-6 w-full">
+        <section id="fallback-pipeline" className="flex flex-col gap-6 w-full">
           <div className="flex items-end justify-between">
             <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-bold text-neutral-900">Keunggulan Engine Kami</h2>
-              <span className="text-xs text-neutral-600">Mengapa ratusan developer AI coding assistant dan bot memilih integrasi yrcrouter.</span>
+              <h2 className="text-xl font-bold text-neutral-900">Arsitektur Multi-Tier Fallback</h2>
+              <span className="text-xs text-neutral-600">Alur perlindungan otomatis yang menjamin sesi koding IDE Anda tidak pernah terhenti saat rate limit.</span>
             </div>
-            <a href="#providers" className="text-xs text-[#e05236] font-semibold hover:underline flex items-center gap-1">
-              <span>Lihat Selengkapnya</span>
+            <a href="#provider" className="text-xs text-[#e05236] font-semibold hover:underline flex items-center gap-1">
+              <span>Konfigurasi Provider</span>
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -451,34 +434,75 @@ export default function App() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-2">
               <span className="w-6 h-6 rounded bg-orange-100 text-[#e05236] text-xs font-bold flex items-center justify-center font-mono">01</span>
-              <h3 className="font-bold text-sm text-neutral-900 mt-1">Multi-Tier Auto Fallback</h3>
+              <h3 className="font-bold text-sm text-neutral-900 mt-1">Tier 1: High-Speed Primary</h3>
               <p className="text-xs text-neutral-600 leading-relaxed">
-                Mencegah error HTTP 429 saat sesi koding. Beralih instan dari tier akun utama ke model cadangan atau tier gratis tanpa memutus koneksi IDE.
+                Prioritas utama ke akun resmi langsung seperti Google Antigravity, GitHub Copilot, atau DeepSeek dengan kecepatan maksimal dan latensi terendah.
               </p>
             </div>
 
             <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-2">
               <span className="w-6 h-6 rounded bg-orange-100 text-[#e05236] text-xs font-bold flex items-center justify-center font-mono">02</span>
-              <h3 className="font-bold text-sm text-neutral-900 mt-1">Direct Antigravity &amp; Copilot OAuth</h3>
+              <h3 className="font-bold text-sm text-neutral-900 mt-1">Tier 2: Cloud Failover</h3>
               <p className="text-xs text-neutral-600 leading-relaxed">
-                Otorisasi akun Google Antigravity dan GitHub Copilot via Device Code resmi tanpa perlu repot mengekstrak token manual.
+                Jika Tier 1 mendeteksi HTTP 429 atau 5xx, router mengalihkan request secara instan dalam &lt;10ms ke OpenRouter atau Google Gemini tanpa memutus sesi IDE.
               </p>
             </div>
 
             <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-2">
               <span className="w-6 h-6 rounded bg-orange-100 text-[#e05236] text-xs font-bold flex items-center justify-center font-mono">03</span>
-              <h3 className="font-bold text-sm text-neutral-900 mt-1">RTK Token Optimizer</h3>
+              <h3 className="font-bold text-sm text-neutral-900 mt-1">Tier 3: Local LLM Fallback</h3>
               <p className="text-xs text-neutral-600 leading-relaxed">
-                Menghapus baris kosong berulang, spasi buntut, dan metadata git diff secara cerdas, memangkas 20% hingga 40% konsumsi token prompt.
+                Jalur darurat tanpa kuota internet ke Ollama atau LM Studio lokal. Memastikan completion dan chat tetap responsif saat koneksi jaringan terputus.
               </p>
             </div>
 
             <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-2">
               <span className="w-6 h-6 rounded bg-orange-100 text-[#e05236] text-xs font-bold flex items-center justify-center font-mono">04</span>
-              <h3 className="font-bold text-sm text-neutral-900 mt-1">100% Zero Dependency Go Core</h3>
+              <h3 className="font-bold text-sm text-neutral-900 mt-1">Zero Dependency Go Engine</h3>
               <p className="text-xs text-neutral-600 leading-relaxed">
-                Dibangun dengan pustaka standar Go native tanpa bloatware external. Bebas risiko supply-chain CVE, hemat memori &lt; 20MB RAM, dan boot time &lt; 50ms.
+                Dibangun murni dengan Go standard library tanpa perantara runtime berat. Footprint RAM hanya 15MB - 20MB dan waktu boot di bawah 50ms.
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="rtk-optimizer" className="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs flex flex-col gap-5 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold text-neutral-900">RTK Token Compression Engine</h2>
+                <span className={'px-2 py-0.5 text-[10px] font-mono font-bold rounded ' + (config.compress_tokens ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-100 text-neutral-600')}>
+                  {config.compress_tokens ? 'OPTIMIZER AKTIF' : 'NONAKTIF'}
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 max-w-2xl">
+                Memangkas pemborosan token prompt hingga 40% dengan menormalkan whitespace berlebih, metadata git diff redundan, dan baris kosong berturut-turut sebelum diteruskan ke upstream model LLM.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={toggleCompression}
+              className={'px-4 py-2 text-xs font-semibold rounded-lg transition self-start ' + (config.compress_tokens ? 'bg-neutral-900 hover:bg-neutral-800 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white')}
+            >
+              {config.compress_tokens ? 'Matikan Kompresi' : 'Aktifkan Kompresi'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-neutral-100">
+            <div className="p-4 bg-neutral-50 border border-neutral-200/80 rounded-xl flex flex-col gap-1">
+              <span className="text-xs font-bold text-neutral-900">Git Diff Index Normalization</span>
+              <span className="text-[11px] text-neutral-600">Menghapus hash commit index dan file header git redundant pada prompt koding.</span>
+            </div>
+            <div className="p-4 bg-neutral-50 border border-neutral-200/80 rounded-xl flex flex-col gap-1">
+              <span className="text-xs font-bold text-neutral-900">Trailing &amp; Empty Line Compaction</span>
+              <span className="text-[11px] text-neutral-600">Menyatukan spasi buntut dan jeda baris berturut-turut tanpa merusak struktur sintaksis kode.</span>
+            </div>
+            <div className="p-4 bg-neutral-50 border border-neutral-200/80 rounded-xl flex flex-col gap-1">
+              <span className="text-xs font-bold text-neutral-900">Estimasi Token Dihemat</span>
+              <span className="text-lg font-bold text-[#e05236] font-mono">
+                {metrics.saved_tokens_est ? metrics.saved_tokens_est.toLocaleString() : '0'} tokens
+              </span>
             </div>
           </div>
         </section>
@@ -487,9 +511,9 @@ export default function App() {
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-neutral-900">Interactive Live Playground</h2>
-              <span className="text-xs text-neutral-600">Uji coba panggilan API secara langsung melalui browser Anda tanpa perlu membuka terminal.</span>
+              <span className="text-xs text-neutral-600">Uji coba pemanggilan API langsung melalui browser Anda tanpa perlu membuka terminal eksternal.</span>
             </div>
-            <span className="text-xs font-mono text-neutral-600">Header: Authorization aktif otomatis</span>
+            <span className="text-xs font-mono text-neutral-600">Header: Authorization otomatis aktif</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full">
@@ -571,65 +595,11 @@ export default function App() {
           </div>
         </section>
 
-        <section id="api-reference" className="flex flex-col gap-4 w-full">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-bold text-neutral-900">Dokumentasi Endpoint REST API</h2>
-              <span className="text-xs text-neutral-600">Daftar spesifikasi lengkap endpoint yang siap diintegrasikan ke bot atau aplikasi Anda.</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => triggerCopy(JSON.stringify(config.providers, null, 2), 'Format JSON Disalin!')}
-              className="px-3 py-1.5 text-xs font-medium border border-neutral-200 hover:bg-neutral-50 rounded-lg text-neutral-700 bg-white"
-            >
-              JSON Format
-            </button>
-          </div>
-
-          <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-xs divide-y divide-neutral-100 text-xs w-full">
-            <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-orange-100 text-[#e05236] rounded">POST</span>
-                <span className="font-mono font-semibold text-neutral-900">/v1/chat/completions</span>
-                <span className="text-neutral-600 text-xs hidden sm:inline">&mdash; Chat completions kompatibel format OpenAI &amp; multi-tier fallback</span>
-              </div>
-              <span className="font-mono text-[11px] text-neutral-600">Payload: ChatRequest</span>
-            </div>
-
-            <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-purple-100 text-purple-700 rounded">OAUTH</span>
-                <span className="font-mono font-semibold text-neutral-900">/callback</span>
-                <span className="text-neutral-600 text-xs hidden sm:inline">&mdash; Callback otorisasi Google Antigravity PKCE</span>
-              </div>
-              <span className="font-mono text-[11px] text-neutral-600">Alur: Authorization Code Flow</span>
-            </div>
-
-            <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded">OAUTH</span>
-                <span className="font-mono font-semibold text-neutral-900">/api/oauth/github/device-code</span>
-                <span className="text-neutral-600 text-xs hidden sm:inline">&mdash; Minta kode 8-digit aktivasi GitHub Copilot</span>
-              </div>
-              <span className="font-mono text-[11px] text-neutral-600">Alur: Device Code Flow</span>
-            </div>
-
-            <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-blue-100 text-blue-700 rounded">GET</span>
-                <span className="font-mono font-semibold text-neutral-900">/v1/models</span>
-                <span className="text-neutral-600 text-xs hidden sm:inline">&mdash; Mengembalikan daftar agregasi model dari 40+ provider</span>
-              </div>
-              <span className="font-mono text-[11px] text-neutral-600">Query: None</span>
-            </div>
-          </div>
-        </section>
-
-        <section id="providers" className="flex flex-col gap-6 w-full">
+        <section id="provider" className="flex flex-col gap-6 w-full">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-neutral-900">Katalog Provider AI ({config.providers ? config.providers.length : 0})</h2>
-              <span className="text-xs text-neutral-600">Termasuk Google Antigravity, GitHub Copilot, OpenAI, Claude, dan provider lokal.</span>
+              <span className="text-xs text-neutral-600">Daftar lengkap provider AI terintegrasi termasuk Google Antigravity, Copilot, Claude, dan provider lokal.</span>
             </div>
 
             <input
@@ -752,187 +722,83 @@ export default function App() {
           </div>
         </section>
 
-        <section id="paket-&-lisensi" className="flex flex-col gap-6 items-center w-full">
-          <div className="text-center flex flex-col gap-1 max-w-xl">
-            <h2 className="text-2xl font-bold text-neutral-900">Paket Lisensi &amp; Peran</h2>
-            <p className="text-xs text-neutral-600">Pilih tingkatan role yang sesuai dengan kebutuhan integrasi Anda. Seluruh pembayaran dan aktivasi berjalan otomatis.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
-            <div className="p-6 bg-white border border-neutral-200/80 rounded-2xl shadow-xs flex flex-col gap-5">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-600">STARTER</span>
-                <h3 className="text-lg font-bold text-neutral-900">Free Tier</h3>
-                <span className="text-xs text-neutral-600">Untuk eksplorasi fitur dasar dan uji coba integrasi bot Anda.</span>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold text-neutral-900">Gratis</span>
-                <span className="text-xs text-neutral-600">/ selamanya</span>
-              </div>
-
-              <ul className="flex flex-col gap-2.5 text-xs text-neutral-700">
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>50 Request API / hari</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>Akses Pengujian di Live Playground</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>Auto-Fallback Dasar</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-neutral-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                  <span>Tanpa Antigravity &amp; Copilot OAuth</span>
-                </li>
-              </ul>
-
-              <button type="button" className="w-full py-2.5 text-xs font-semibold border border-neutral-200 hover:bg-neutral-50 rounded-lg text-neutral-800 mt-auto">
-                Mulai Gratis Sekarang
-              </button>
-            </div>
-
-            <div className="p-6 bg-white border-2 border-[#e05236] rounded-2xl shadow-sm flex flex-col gap-5 relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-[#e05236] font-mono">REKOMENDASI &bull; FULL FITUR</span>
-                <span className="text-[9px] bg-orange-100 text-[#e05236] px-2 py-0.5 rounded font-bold uppercase">Populer</span>
-              </div>
-
-              <div className="flex flex-col">
-                <h3 className="text-lg font-bold text-neutral-900">Standar Pro</h3>
-                <span className="text-xs text-neutral-600">Pilihan terlengkap untuk bot Discord jualan, kreator konten, dan automasi akun.</span>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="text-xs font-semibold text-neutral-600">Rp</span>
-                <span className="text-3xl font-extrabold text-neutral-900">25.000</span>
-                <span className="text-xs text-neutral-600">/ bulan</span>
-              </div>
-
-              <ul className="flex flex-col gap-2.5 text-xs text-neutral-700">
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>2.500 Request API / bulan (Unlimited self-hosted)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>Integrasi Penuh Google Antigravity &amp; Copilot OAuth</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>Bypass Limit Kuota Otomatis via Fallback 3-Tier</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>RTK Token Compression (-40% Token)</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  <span>Role Server VIP Member &amp; Bantuan Setup</span>
-                </li>
-              </ul>
-
-              <button type="button" className="w-full py-2.5 text-xs font-semibold bg-[#e05236] hover:bg-[#c9452b] text-white rounded-lg shadow-sm mt-auto">
-                Pilih Paket Standar
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section id="order-via-bot" className="p-8 bg-white border border-neutral-200/80 rounded-2xl shadow-xs flex flex-col gap-6 w-full">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <section id="traffic-logs" className="flex flex-col gap-4 w-full">
+          <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-bold text-neutral-900">Order Otomatis Lewat Bot Discord 24/7</h2>
-              <p className="text-xs text-neutral-600 max-w-2xl">
-                Tidak perlu menunggu admin membalas manual. Lakukan pembelian role atau API key kapan saja melalui Bot Resmi Discord kami. Bayar melalui QRIS dan kunci API Anda langsung dikirimkan ke Direct Message (DM) dalam hitungan detik.
-              </p>
+              <h2 className="text-xl font-bold text-neutral-900">Traffic Inspector &amp; Request Logs</h2>
+              <span className="text-xs text-neutral-600">Catatan telemetri realtime setiap request yang diproses oleh engine gateway yrcrouter.</span>
             </div>
-
             <button
               type="button"
-              onClick={() => triggerCopy('https://discord.gg/antigravity', 'Link Discord disalin!')}
-              className="px-5 py-2.5 bg-[#5865F2] hover:bg-[#4752c4] text-white text-xs font-semibold rounded-lg flex items-center gap-2 shadow-sm whitespace-nowrap self-start"
+              onClick={fetchData}
+              className="px-3 py-1.5 text-xs font-medium border border-neutral-200 hover:bg-neutral-50 rounded-lg text-neutral-700 bg-white flex items-center gap-1.5"
             >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
               </svg>
-              <span>Order Lewat Bot Discord</span>
+              <span>Refresh Log</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-neutral-100 w-full">
-            <div className="p-4 bg-neutral-50 border border-neutral-200/80 rounded-xl flex flex-col gap-1">
-              <span className="text-xs font-bold text-neutral-900">Langkah 1: Masuk Server</span>
-              <span className="text-[11px] text-neutral-600">Klik tombol di atas untuk bergabung ke server Discord resmi kami.</span>
-            </div>
-            <div className="p-4 bg-neutral-50 border border-neutral-200/80 rounded-xl flex flex-col gap-1">
-              <span className="text-xs font-bold text-neutral-900">Langkah 2: Perintah /order</span>
-              <span className="text-[11px] text-neutral-600">Buka channel #order-lisensi atau DM bot kami, lalu ketik perintah /order.</span>
-            </div>
-            <div className="p-4 bg-neutral-50 border border-neutral-200/80 rounded-xl flex flex-col gap-1">
-              <span className="text-xs font-bold text-neutral-900">Langkah 3: QRIS Instan</span>
-              <span className="text-[11px] text-neutral-600">Scan QRIS dan sistem akan langsung mengirimkan kunci aktif ke DM Anda.</span>
-            </div>
-          </div>
-        </section>
-
-        <section id="status-&-sla" className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-          <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-neutral-600">SLA &amp; KEANDALAN</span>
-            <span className="font-bold text-sm text-neutral-900">Garansi Uptime 99.98%</span>
-            <span className="text-xs text-neutral-600 mt-1">
-              Infrastruktur serverless didukung failover otomatis antar region. Pemantauan aktif memverifikasi status koneksi setiap detik.
-            </span>
-          </div>
-
-          <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-neutral-600">KEAMANAN</span>
-            <span className="font-bold text-sm text-neutral-900">Zero-Trust &amp; Anti-Bruteforce</span>
-            <span className="text-xs text-neutral-600 mt-1">
-              Dilengkapi pembatasan ketat rate limiting per IP (60 req/min), enkripsi token berkekuatan kriptografi, dan perlindungan buffer body.
-            </span>
-          </div>
-
-          <div className="p-5 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-1">
-            <span className="text-[10px] uppercase font-bold text-neutral-600">KOMPATIBILITAS</span>
-            <span className="font-bold text-sm text-neutral-900">Mendukung Seluruh Bahasa</span>
-            <span className="text-xs text-neutral-600 mt-1">
-              Berjalan di atas protokol standar HTTP REST JSON yang kompatibel dengan Python, Node.js, PHP, Golang, cURL, C#, dan Discord.js.
-            </span>
+          <div className="bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-xs w-full">
+            {logs && logs.length > 0 ? (
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-600 font-mono text-[11px]">
+                      <th className="py-2.5 px-4 font-semibold">Waktu</th>
+                      <th className="py-2.5 px-4 font-semibold">Model Target</th>
+                      <th className="py-2.5 px-4 font-semibold">Provider</th>
+                      <th className="py-2.5 px-4 font-semibold">Status HTTP</th>
+                      <th className="py-2.5 px-4 font-semibold">Latensi</th>
+                      <th className="py-2.5 px-4 font-semibold">Stream</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
+                    {logs.slice(-10).reverse().map((log, idx) => (
+                      <tr key={log.id || idx} className="hover:bg-neutral-50/50">
+                        <td className="py-2.5 px-4 text-neutral-500">{log.timestamp}</td>
+                        <td className="py-2.5 px-4 font-bold text-neutral-900">{log.model}</td>
+                        <td className="py-2.5 px-4">
+                          <span className="px-2 py-0.5 rounded bg-neutral-100 text-neutral-700">
+                            {log.provider}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-4">
+                          <span className={'px-1.5 py-0.5 rounded font-bold ' + (log.status_code === 200 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800')}>
+                            {log.status_code}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-4 text-cyan-700 font-semibold">{log.latency_ms} ms</td>
+                        <td className="py-2.5 px-4 text-neutral-500">{log.stream ? 'Yes' : 'No'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center flex flex-col items-center justify-center gap-2 text-neutral-500 text-xs">
+                <svg className="w-8 h-8 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+                <span>Belum ada log traffic. Kirim prompt pengujian di playground di atas untuk melihat alur telemetri live.</span>
+              </div>
+            )}
           </div>
         </section>
 
         <section id="sdk-integrasi" className="flex flex-col gap-4 w-full">
           <div className="flex flex-col gap-1">
-            <h2 className="text-xl font-bold text-neutral-900">Contoh Integrasi Kode SDK</h2>
-            <span className="text-xs text-neutral-600">Salin cuplikan kode siap pakai untuk langsung menghubungkan backend Anda.</span>
+            <h2 className="text-xl font-bold text-neutral-900">SDK &amp; Konfigurasi Klien IDE</h2>
+            <span className="text-xs text-neutral-600">Salin cuplikan kode atau setting JSON untuk langsung menghubungkan editor, CLI, dan backend Anda.</span>
           </div>
 
           <div className="bg-[#0c1322] border border-neutral-800 rounded-2xl overflow-hidden shadow-sm flex flex-col w-full">
             <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-[#090e1a]">
               <div className="flex items-center gap-2">
-                {['cURL', 'Node.js', 'Discord.js', 'Python', 'Go'].map(sdk => (
+                {['cURL', 'Node.js', 'Python', 'Go', 'Cursor / Cline'].map(sdk => (
                   <button
                     key={sdk}
                     type="button"
@@ -953,53 +819,13 @@ export default function App() {
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                 </svg>
-                <span>Salin Kode</span>
+                <span>Salin Konfigurasi</span>
               </button>
             </div>
 
             <pre className="p-5 font-mono text-xs text-zinc-300 overflow-x-auto leading-relaxed">
               {sdkCode[selectedSdk]}
             </pre>
-          </div>
-        </section>
-
-        <section id="faq" className="flex flex-col gap-6 w-full">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-xl font-bold text-neutral-900">Pertanyaan yang Sering Diajukan (FAQ)</h2>
-            <span className="text-xs text-neutral-600">Jawaban lengkap dan transparan seputar durasi akun, bypass limit, serta integrasi bot.</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start w-full">
-            {faqs.map((f, idx) => {
-              const isOpen = faqOpen[idx];
-              return (
-                <div key={idx} className="p-4 bg-white border border-neutral-200/80 rounded-xl shadow-xs flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFaqOpen({ ...faqOpen, [idx]: !isOpen })}
-                    className="flex items-center justify-between text-left font-bold text-xs sm:text-sm text-neutral-900 gap-2 w-full"
-                  >
-                    <span>{f.q}</span>
-                    <span className="text-neutral-400 shrink-0">
-                      {isOpen ? (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 15l-6-6-6 6" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M6 9l6 6 6-6" />
-                        </svg>
-                      )}
-                    </span>
-                  </button>
-                  {isOpen && (
-                    <p className="text-xs text-neutral-600 leading-relaxed pt-1 border-t border-neutral-100">
-                      {f.a}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </section>
       </main>
@@ -1012,43 +838,43 @@ export default function App() {
               <span className="font-bold text-sm text-neutral-900">yrcrouter</span>
             </div>
             <p className="text-neutral-500 text-xs leading-relaxed">
-              Infrastruktur REST API berkinerja tinggi untuk proxy AI model multi-provider, integrasi Google Antigravity &amp; Copilot OAuth resmi, dan auto-fallback tercepat.
+              Infrastruktur REST API berkinerja tinggi untuk proxy AI multi-provider, integrasi Google Antigravity &amp; Copilot OAuth resmi, dan auto-fallback tercepat.
             </p>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[11px] text-emerald-700 font-medium">Semua Gateway Operasional &bull; 99.98% SLA</span>
+              <span className="text-[11px] text-emerald-700 font-medium">Gateway Operasional &bull; Port {config.port || 20128}</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="font-bold text-xs uppercase text-neutral-900 tracking-wider">NAVIGASI PORTAL</span>
+            <span className="font-bold text-xs uppercase text-neutral-900 tracking-wider">NAVIGASI ROUTER</span>
             <a href="#overview" className="hover:text-neutral-900">Overview Gateway</a>
-            <a href="#keunggulan" className="hover:text-neutral-900">Keunggulan Engine</a>
-            <a href="#playground" className="hover:text-neutral-900">Interactive Playground</a>
-            <a href="#providers" className="hover:text-neutral-900">Katalog Provider</a>
-            <a href="#paket-&-lisensi" className="hover:text-neutral-900">Paket &amp; Lisensi Role</a>
+            <a href="#provider" className="hover:text-neutral-900">Katalog Provider</a>
+            <a href="#fallback-pipeline" className="hover:text-neutral-900">Fallback Pipeline</a>
+            <a href="#rtk-optimizer" className="hover:text-neutral-900">RTK Optimizer</a>
+            <a href="#playground" className="hover:text-neutral-900">Live Playground</a>
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="font-bold text-xs uppercase text-neutral-900 tracking-wider">SDK &amp; BAHASA</span>
-            <span className="hover:text-neutral-900">cURL Command</span>
-            <span className="hover:text-neutral-900">Node.js Fetch / Axios</span>
-            <span className="hover:text-neutral-900">Discord.js Bot Integration</span>
-            <span className="hover:text-neutral-900">Python Requests</span>
-            <span className="hover:text-neutral-900">PHP cURL Client</span>
+            <span className="font-bold text-xs uppercase text-neutral-900 tracking-wider">INTEGRASI SDK</span>
+            <span className="hover:text-neutral-900">cURL API Direct</span>
+            <span className="hover:text-neutral-900">OpenAI Node.js SDK</span>
+            <span className="hover:text-neutral-900">OpenAI Python SDK</span>
+            <span className="hover:text-neutral-900">Golang HTTP Client</span>
+            <span className="hover:text-neutral-900">Cline / Cursor Editor</span>
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="font-bold text-xs uppercase text-neutral-900 tracking-wider">DUKUNGAN &amp; KOMUNITAS</span>
+            <span className="font-bold text-xs uppercase text-neutral-900 tracking-wider">REPOSITORI &amp; SISTEM</span>
             <a href="https://github.com/yanzyuyu/yrcrouter" target="_blank" rel="noreferrer" className="hover:text-neutral-900 flex items-center gap-1">
               <span>GitHub Repository</span>
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </a>
-            <span className="hover:text-neutral-900">Order Otomatis 24/7 QRIS</span>
-            <span className="hover:text-neutral-900">Kebijakan SLA &amp; Keamanan</span>
-            <span className="hover:text-neutral-900">Otentikasi Akun Discord</span>
+            <span className="hover:text-neutral-900">Pure Go Standard Library</span>
+            <span className="hover:text-neutral-900">Zero-Trust Local Engine</span>
+            <span className="hover:text-neutral-900">Zero Commercial Dependency</span>
           </div>
         </div>
 
