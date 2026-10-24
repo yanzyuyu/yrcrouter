@@ -28,6 +28,12 @@ export default function App() {
   const [testLoading, setTestLoading] = useState(false);
   const [testStatus, setTestStatus] = useState('Siap');
 
+  const [oauthModalOpen, setOauthModalOpen] = useState(false);
+  const [oauthProvider, setOauthProvider] = useState(null);
+  const [deviceFlowData, setDeviceFlowData] = useState(null);
+  const [oauthStatusText, setOauthStatusText] = useState('');
+  const [manualTokenInput, setManualTokenInput] = useState('');
+
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 4000);
@@ -66,6 +72,81 @@ export default function App() {
       fetchData();
     } catch (err) {
       setTestStatus('Gagal menyimpan');
+    }
+  }
+
+  async function openOAuthModal(provider) {
+    setOauthProvider(provider);
+    setOauthModalOpen(true);
+    setDeviceFlowData(null);
+    setOauthStatusText('');
+    setManualTokenInput('');
+
+    if (provider.id === 'github_copilot' || provider.id === 'github') {
+      setOauthStatusText('Meminta device code dari GitHub...');
+      try {
+        const res = await fetch('/api/oauth/github/device-code', { method: 'POST' });
+        const data = await res.json();
+        if (data.user_code) {
+          setDeviceFlowData(data);
+          setOauthStatusText('Silakan buka tautan dan masukkan kode verifikasi.');
+          startDevicePolling(data.device_code, data.interval || 5);
+        } else {
+          setOauthStatusText('Gagal: ' + (data.error || 'Respon tidak valid'));
+        }
+      } catch (err) {
+        setOauthStatusText('Error menghubungi GitHub: ' + err.message);
+      }
+    }
+  }
+
+  function startDevicePolling(deviceCode, intervalSec) {
+    const pollTimer = setInterval(async () => {
+      try {
+        const res = await fetch('/api/oauth/github/poll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device_code: deviceCode })
+        });
+        const data = await res.json();
+        if (data.status === 'authenticated') {
+          clearInterval(pollTimer);
+          setOauthStatusText('Otorisasi berhasil! Token telah terpasang.');
+          setTimeout(() => {
+            setOauthModalOpen(false);
+            fetchData();
+          }, 1500);
+        } else if (data.error && data.error !== 'authorization_pending') {
+          clearInterval(pollTimer);
+          setOauthStatusText('Otorisasi dibatalkan: ' + data.error);
+        }
+      } catch (e) {
+        clearInterval(pollTimer);
+      }
+    }, Math.max(intervalSec * 1000, 3000));
+  }
+
+  async function handleImportTokenSubmit() {
+    if (!oauthProvider || !manualTokenInput) return;
+    setOauthStatusText('Menyimpan token...');
+    try {
+      const res = await fetch('/api/oauth/import-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider_id: oauthProvider.id,
+          token: manualTokenInput
+        })
+      });
+      if (res.ok) {
+        setOauthStatusText('Token berhasil diimpor!');
+        setTimeout(() => {
+          setOauthModalOpen(false);
+          fetchData();
+        }, 1200);
+      }
+    } catch (err) {
+      setOauthStatusText('Gagal menyimpan token: ' + err.message);
     }
   }
 
@@ -114,6 +195,8 @@ export default function App() {
     return matchesCat && matchesSearch;
   });
 
+  const oauthSupportedIds = ['github_copilot', 'github', 'cursor', 'claude', 'gemini', 'openai', 'codex'];
+
   function formatUptime(seconds) {
     if (!seconds) return '0s';
     if (seconds < 60) return seconds + 's';
@@ -134,7 +217,7 @@ export default function App() {
             </span>
             <div className="flex flex-col">
               <span className="font-semibold text-base tracking-tight leading-none">yrcrouter</span>
-              <span className="text-xs text-zinc-400 font-mono">multi-provider ai gateway</span>
+              <span className="text-xs text-zinc-400 font-mono">multi-provider ai gateway + oauth</span>
             </div>
           </div>
 
@@ -233,6 +316,8 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredProviders.map(p => {
                 const isKeyOpen = keyVisible[p.id];
+                const hasOAuth = oauthSupportedIds.includes(p.id);
+
                 return (
                   <article key={p.id} className="p-4 bg-zinc-900/90 border border-zinc-800 rounded flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-2">
@@ -255,7 +340,19 @@ export default function App() {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">API Key</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">Autentikasi</label>
+                        {hasOAuth && (
+                          <button
+                            type="button"
+                            onClick={() => openOAuthModal(p)}
+                            className="text-[10px] text-cyan-400 hover:text-cyan-300 font-mono underline"
+                          >
+                            OAuth Login
+                          </button>
+                        )}
+                      </div>
+
                       <div className="flex items-center gap-1.5">
                         <input
                           type={isKeyOpen ? 'text' : 'password'}
@@ -401,6 +498,73 @@ export default function App() {
           </section>
         )}
       </div>
+
+      {oauthModalOpen && oauthProvider && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded p-6 max-w-md w-full flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-sm text-zinc-100">OAuth / Login: {oauthProvider.name}</span>
+              <button
+                type="button"
+                onClick={() => setOauthModalOpen(false)}
+                className="text-zinc-500 hover:text-zinc-300 text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {(oauthProvider.id === 'github_copilot' || oauthProvider.id === 'github') && deviceFlowData && (
+              <div className="flex flex-col gap-3 py-2">
+                <span className="text-xs text-zinc-400">1. Kunjungi halaman aktivasi GitHub Copilot:</span>
+                <a
+                  href={deviceFlowData.verification_uri || 'https://github.com/login/device'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-2 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-cyan-300 border border-zinc-700 rounded text-center"
+                >
+                  Buka {deviceFlowData.verification_uri || 'github.com/login/device'} ↗
+                </a>
+
+                <span className="text-xs text-zinc-400 mt-2">2. Masukkan kode verifikasi 8-digit ini:</span>
+                <div className="p-3 bg-zinc-950 border border-zinc-800 rounded text-center">
+                  <span className="font-mono text-2xl font-bold tracking-widest text-cyan-400 select-all">
+                    {deviceFlowData.user_code}
+                  </span>
+                </div>
+
+                <span className="text-xs font-mono text-zinc-400 text-center animate-pulse mt-2">
+                  {oauthStatusText}
+                </span>
+              </div>
+            )}
+
+            {oauthProvider.id !== 'github_copilot' && oauthProvider.id !== 'github' && (
+              <div className="flex flex-col gap-3">
+                <span className="text-xs text-zinc-400">
+                  Impor token sesi / OAuth untuk <strong>{oauthProvider.name}</strong>:
+                </span>
+                <textarea
+                  rows={3}
+                  placeholder="Tempel token sesi OAuth di sini..."
+                  value={manualTokenInput}
+                  onChange={e => setManualTokenInput(e.target.value)}
+                  className="w-full p-2 text-xs font-mono bg-zinc-950 border border-zinc-800 rounded text-zinc-200 outline-none focus:border-cyan-600"
+                />
+                <button
+                  type="button"
+                  onClick={handleImportTokenSubmit}
+                  className="w-full py-2 text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-zinc-950 rounded"
+                >
+                  Simpan &amp; Hubungkan
+                </button>
+                {oauthStatusText && (
+                  <span className="text-xs font-mono text-zinc-400 text-center">{oauthStatusText}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <footer className="border-t border-zinc-800 py-4 mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-2">

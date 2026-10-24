@@ -50,6 +50,16 @@ func DefaultConfig() Config {
 				Models:   []string{"openrouter/auto", "google/gemini-2.5-flash", "anthropic/claude-3.7-sonnet", "deepseek/deepseek-chat"},
 			},
 			{
+				ID:       "github_copilot",
+				Name:     "GitHub Copilot",
+				Category: "Cloud",
+				BaseURL:  "https://api.individual.githubcopilot.com",
+				APIKey:   "",
+				Tier:     1,
+				Enabled:  true,
+				Models:   []string{"gpt-4o", "claude-3.5-sonnet", "o1-preview"},
+			},
+			{
 				ID:       "groq",
 				Name:     "Groq",
 				Category: "High-Speed",
