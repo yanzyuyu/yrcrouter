@@ -50,6 +50,16 @@ func DefaultConfig() Config {
 				Models:   []string{"openrouter/auto", "google/gemini-2.5-flash", "anthropic/claude-3.7-sonnet", "deepseek/deepseek-chat"},
 			},
 			{
+				ID:       "antigravity",
+				Name:     "Google Antigravity",
+				Category: "Cloud",
+				BaseURL:  "https://generativelanguage.googleapis.com/v1beta/openai",
+				APIKey:   "",
+				Tier:     1,
+				Enabled:  true,
+				Models:   []string{"antigravity/claude-3-7-sonnet", "antigravity/claude-3-5-sonnet", "antigravity/gemini-2.5-pro", "antigravity/gemini-2.5-flash"},
+			},
+			{
 				ID:       "github_copilot",
 				Name:     "GitHub Copilot",
 				Category: "Cloud",

@@ -41,6 +41,8 @@ func (m *Manager) StartPKCE(providerID string) (authURL string, state string, co
 	m.sessions[state] = session
 
 	switch providerID {
+	case "antigravity":
+		authURL = "https://accounts.google.com/o/oauth2/v2/auth?client_id=1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&access_type=offline&prompt=consent&state=" + state
 	case "claude":
 		authURL = "https://claude.ai/login/oauth/authorize?client_id=claude-code&response_type=code&code_challenge=" + codeChallenge + "&code_challenge_method=S256&state=" + state
 	case "gemini":

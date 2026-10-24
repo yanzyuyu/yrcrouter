@@ -1,12 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html, body {
   min-height: 100vh;
-  background-color: oklch(0.14 0.015 255);
-  color: oklch(0.96 0.01 255);
+  background-color: oklch(0.985 0.005 85);
+  background-image: radial-gradient(oklch(0.89 0.01 85) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: oklch(0.18 0.01 85);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  scroll-behavior: smooth;
 }
