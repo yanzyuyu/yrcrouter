@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>yrcrouter &mdash; AI Model Gateway &amp; Token Optimizer</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead">
+      <div class="brand">
+        <span class="symbol">YR</span>
+        <div class="title-wrap">
+          <h1 class="logo">yrcrouter</h1>
+          <span class="sub">local ai proxy &amp; fallback router</span>
+        </div>
+      </div>
+      <div class="masthead-meta">
+        <span class="endpoint-chip">http://localhost:20128/v1</span>
+        <button id="btn-refresh" class="btn btn-ghost" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <main class="grid-layout">
+      <section class="panel metrics-panel">
+        <div class="stat-card">
+          <span class="stat-label">Total Permintaan</span>
+          <span class="stat-value" id="val-total">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Berhasil</span>
+          <span class="stat-value stat-ok" id="val-success">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Gagal</span>
+          <span class="stat-value stat-fail" id="val-failed">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Fallback Dipicu</span>
+          <span class="stat-value" id="val-fallback">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Estimasi Token Hemat</span>
+          <span class="stat-value stat-highlight" id="val-saved">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Uptime</span>
+          <span class="stat-value" id="val-uptime">0s</span>
+        </div>
+      </section>
+
+      <section class="panel test-panel">
+        <div class="panel-head">
+          <h2>Test Prompt Router</h2>
+          <span class="panel-desc">Kirim prompt uji coba melalui pipeline router lokal</span>
+        </div>
+        <form id="form-test" class="prompt-form">
+          <div class="field-row">
+            <label for="select-model" class="field-label">Model Target</label>
+            <input type="text" id="select-model" class="input-text" value="gemini-2.5-flash" required>
+          </div>
+          <div class="field-row">
+            <label for="prompt-input" class="field-label">Pesan Prompt</label>
+            <textarea id="prompt-input" class="input-area" rows="3" placeholder="Tulis instruksi uji coba..." required>Jelaskan cara kerja yrcrouter dalam 1 kalimat padat.</textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="btn-submit" class="btn btn-primary">Kirim Permintaan</button>
+            <span id="test-status" class="status-indicator">Siap</span>
+          </div>
+        </form>
+        <div class="response-box">
+          <pre id="test-output" class="code-output">Menunggu eksekusi uji coba...</pre>
+        </div>
+      </section>
+
+      <section class="panel providers-panel">
+        <div class="panel-head">
+          <h2>Penyedia Layanan (Providers &amp; Tiers)</h2>
+          <span class="panel-desc">Kelola rute upstream, prioritas tier, dan api keys</span>
+        </div>
+        <div id="providers-list" class="providers-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Provider</th>
+                <th>Tier</th>
+                <th>Base URL</th>
+                <th>API Key</th>
+                <th>Model Terdaftar</th>
+              </tr>
+            </thead>
+            <tbody id="providers-tbody">
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel logs-panel">
+        <div class="panel-head">
+          <h2>Aktivitas Lalu Lintas Terbaru</h2>
+          <span class="panel-desc">100 request terakhir yang diproses melalui gateway</span>
+        </div>
+        <div class="logs-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Model</th>
+                <th>Provider Terpilih</th>
+                <th>Status</th>
+                <th>Latensi</th>
+                <th>Stream</th>
+                <th>Hemat (Bytes)</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody">
+              <tr>
+                <td colspan="7" class="empty-cell">Belum ada request tercatat</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="colophon">
+      <div class="colophon-inner">
+        <span>yrcrouter &bull; Ultra-lean Go AI Gateway</span>
+        <span>Kompatibel dengan Claude Code, Cursor, Cline, Copilot</span>
+      </div>
+    </footer>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

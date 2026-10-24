@@ -1,0 +1,12 @@
+/yrcrouter
+/dist/
+/build/
+*.exe
+*.test
+*.out
+.env
+.env.local
+*.log
+config.json
+.agents/
+.agent/
